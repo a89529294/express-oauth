@@ -19,9 +19,8 @@ app.use(
 
 app.get("/", function (req, res) {
   if (req.session.user) {
-    if (req.session.user.isGoogle) res.redirect("/google-success");
-    res.redirect("/success");
-    return;
+    if (req.session.user.isGoogle) return res.redirect("/google-success");
+    return res.redirect("/success");
   }
 
   res.render("pages/index", {
@@ -47,6 +46,7 @@ app.get("/github/callback", (req, res) => {
   )
     .then((v) => v.json())
     .then((response) => {
+      console.log(response);
       return fetch("https://api.github.com/user", {
         headers: {
           Authorization: `token ${response.access_token}`,
@@ -55,6 +55,7 @@ app.get("/github/callback", (req, res) => {
     })
     .then((v) => v.json())
     .then((response) => {
+      console.log(response);
       req.session.user = response;
       res.redirect("/success");
     });
@@ -62,6 +63,8 @@ app.get("/github/callback", (req, res) => {
 
 // Declare callback route for Google
 app.get("/google/callback", (req, res) => {
+  //
+  console.log(res);
   const data = {
     code: req.query.code,
     client_id: process.env.GOOGLE_CLIENT_ID,
@@ -76,6 +79,8 @@ app.get("/google/callback", (req, res) => {
   })
     .then((r) => r.json())
     .then(async (response) => {
+      // response.id_token is a jwt, extract sub field from payload for an unique identifier
+      console.log(response);
       const accessToken = response.access_token;
       const refreshToken = response.refresh_token;
 
@@ -85,7 +90,7 @@ app.get("/google/callback", (req, res) => {
         },
       };
 
-      const profilePromise = fetch(
+      fetch(
         "https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses",
         options
       )
